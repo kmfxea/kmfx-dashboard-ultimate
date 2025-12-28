@@ -8,21 +8,25 @@ import datetime
 import bcrypt
 import os
 import plotly.express as px
-# ------------------------- KEEP-ALIVE FOR STREAMLIT CLOUD -------------------------
-def keep_alive():
+import requests
+import threading
+import time
+# ------------------------- HEALTHCHECKS.IO KEEP-ALIVE (RELIABLE & WORKING) -------------------------
+def healthchecks_ping():
+    ping_url = "https://hc-ping.com/7537810d-5814-451b-8814-5fccd2f67281"  # ← Your exact Ping URL
     while True:
         try:
-            requests.get("https://kmfx-dashboard.streamlit.app", timeout=10)  # Palitan mo 'to ng actual URL mo
-        except:
-            pass
-        time.sleep(1500)  # Every 25 minutes (1500 seconds)
+            requests.get(ping_url, timeout=10)
+            print("Healthchecks ping sent successfully! App staying awake.")
+        except Exception as e:
+            print(f"Healthchecks ping failed: {e}")
+        time.sleep(1200)  # Every 20 minutes
 
-# Only run in production (Streamlit Cloud)
-if os.getenv("STREAMLIT_SHARING", False) or st.secrets.get("KEEP_ALIVE", False):
-    if not hasattr(st, "_keep_alive_thread_started"):
-        thread = threading.Thread(target=keep_alive, daemon=True)
-        thread.start()
-        st._keep_alive_thread_started = true
+# Run only on Streamlit Cloud
+if "streamlit.io" in os.getenv("SERVER_NAME", "") or os.getenv("STREAMLIT_SHARING"):
+    if not hasattr(st, "hc_thread_started"):
+        threading.Thread(target=healthchecks_ping, daemon=True).start()
+        st.hc_thread_started = True
 # ------------------------- PAGE CONFIG -------------------------
 st.set_page_config(
     page_title="KMFX Dashboard",
@@ -2895,4 +2899,5 @@ elif selected == "My Profile":
 
 # Footer
 st.markdown("---")
+
 st.caption("KMFX EA • Built by Faith ,Shared for Generation • Make him Proud")
